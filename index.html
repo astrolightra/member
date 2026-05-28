@@ -7,7 +7,7 @@
 <meta property="og:title" content="星光來了 · 會員中心">
 <meta property="og:description" content="星光來了 AstroLightRa 會員專區，查看活動、報名與訂單紀錄。">
 <meta property="og:type" content="website">
-<meta property="og:url" content="https://astrolightra.github.io/member/">
+<meta property="og:url" content="https://member.astrolightra.com/">
 <meta property="og:image" content="https://astrolightra.com/_assets/images/e1a1c368889f6d10e24ae1d705ac5070.jpg">
 
 <!-- Line LIFF SDK -->
@@ -627,7 +627,7 @@ body { background: var(--deep); color: var(--text); font-family: 'Noto Sans TC',
 
     <!-- 後台入口 -->
     <div style="text-align:center;padding:24px 0 16px">
-      <a href="https://astrolightra.github.io/admin/"
+      <a href="https://admin.astrolightra.com/"
          style="font-size:12px;color:rgba(255,255,255,0.45);text-decoration:none;letter-spacing:2px;border:0.5px solid rgba(255,255,255,0.15);padding:5px 16px;border-radius:20px"
          target="_blank">⚙ 管理後台</a>
     </div>
@@ -1091,7 +1091,7 @@ async function loadTransactions() {
 // ══════════════════════════════════════════
 //  活動列表（會員前台）
 // ══════════════════════════════════════════
-const EVENT_BASE_URL = 'https://astrolightra.github.io/member/event.html?id=';
+const EVENT_BASE_URL = 'https://member.astrolightra.com/event.html?id=';
 
 async function loadMemberEvents() {
   const { data } = await db.from('events')
