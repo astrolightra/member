@@ -198,7 +198,7 @@ body{background:var(--deep);color:var(--text);font-family:'Noto Sans TC',sans-se
       <div class="logo">星光來了</div>
       <div class="logo-sub">ASTROLIGHTRA</div>
     </div>
-    <div style="font-size:12px;color:var(--muted)">活動報名</div>
+    <div id="header-subtitle" style="font-size:12px;color:var(--muted)">活動報名</div>
   </div>
 
   <!-- Loading -->
@@ -494,11 +494,16 @@ function renderEvent() {
   document.getElementById('event-title').textContent = ev.title;
   document.title = ev.title + ' · 星光來了';
 
+  // 判斷頁面類型（有商品 → 好康go，純活動 → 活動報名）
+  const pageType = eventItems.length > 0 ? '好康go' : '活動報名';
+  const headerSubtitle = document.getElementById('header-subtitle');
+  if (headerSubtitle) headerSubtitle.textContent = pageType;
+
   // 動態更新 OG 標籤（對 Line 重新分享有幫助）
   const ogTitle = document.querySelector('meta[property="og:title"]');
   const ogDesc = document.querySelector('meta[property="og:description"]');
   const ogImg = document.querySelector('meta[property="og:image"]');
-  if (ogTitle) ogTitle.setAttribute('content', ev.title + ' · 星光來了');
+  if (ogTitle) ogTitle.setAttribute('content', '星光來了 · ' + pageType);
   if (ogDesc) ogDesc.setAttribute('content', ev.description ? ev.description.slice(0, 100) : '點擊立即報名 ✨');
   if (ogImg && ev.cover_image) ogImg.setAttribute('content', ev.cover_image);
 
