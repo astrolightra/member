@@ -1,0 +1,1308 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>星光來了 · 會員中心</title>
+<meta property="og:title" content="星光來了 · 會員中心">
+<meta property="og:description" content="星光來了 AstroLightRa 會員專區，查看活動、報名與訂單紀錄。">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://arthur-lovebluehand.github.io/astrolightra-member">
+<meta property="og:image" content="https://astrolightra.com/_assets/images/7955bbd4a6058000ff8d477bf6417ead.jpg">
+
+<!-- Line LIFF SDK -->
+<script src="https://static.line-scdn.net/liff/edge/versions/2.22.3/sdk.js"></script>
+<!-- Supabase SDK -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;500;600&family=Noto+Sans+TC:wght@300;400;500&display=swap" rel="stylesheet">
+
+<style>
+:root {
+  --gold: #c9913d;
+  --gold-light: #d4a843;
+  --gold-soft: #e8c87a;
+  --gold-pale: #f5e6c0;
+  --rose: #c47c6a;
+  --rose-light: #d9967e;
+  --deep: #2e2245;
+  --mid: #38294f;
+  --card: #3f2f58;
+  --card2: #453565;
+  --text: #f0ebe0;
+  --muted: #b0a090;
+  --subtle: #7a6e80;
+  --border: rgba(212,168,67,0.2);
+  --border2: rgba(212,168,67,0.12);
+  --success: #6db88a;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+html { height: 100%; }
+body { background: var(--deep); color: var(--text); font-family: 'Noto Sans TC', sans-serif; min-height: 100%; overflow-x: hidden; }
+
+/* ── LOADING ── */
+#loading {
+  position: fixed; inset: 0; background: var(--deep);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  z-index: 999; transition: opacity .5s;
+}
+
+#loading .star { font-size: 48px; animation: pulse 1.8s ease-in-out infinite; }
+#loading p { margin-top: 16px; font-size: 14px; color: var(--muted); letter-spacing: 2px; }
+@keyframes pulse { 0%,100%{transform:scale(1);opacity:.7} 50%{transform:scale(1.15);opacity:1} }
+
+/* ── WRAP ── */
+.wrap { max-width: 430px; margin: 0 auto; min-height: 100vh; display: flex; flex-direction: column; }
+
+/* ── HEADER ── */
+.header {
+  background: var(--mid); padding: 14px 20px;
+  border-bottom: 0.5px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+  position: sticky; top: 0; z-index: 10;
+}
+.logo { font-family: 'Noto Serif TC', serif; }
+.logo-main { font-size: 16px; color: var(--gold-soft); letter-spacing: 1px; }
+.logo-sub { font-size: 10px; color: var(--muted); letter-spacing: 3px; margin-top: 1px; }
+.header-right { display: flex; align-items: center; gap: 14px; }
+.header-btn { background: none; border: none; color: var(--muted); font-size: 20px; cursor: pointer; padding: 4px; }
+
+/* ── PROFILE ── */
+.profile-section {
+  background: linear-gradient(160deg, var(--mid) 0%, var(--deep) 100%);
+  padding: 20px; border-bottom: 0.5px solid var(--border);
+  position: relative; overflow: hidden;
+}
+.profile-section::before {
+  content: '✦'; position: absolute; right: 20px; top: 10px;
+  font-size: 80px; color: rgba(212,168,67,0.06); pointer-events: none;
+}
+.profile-row { display: flex; align-items: center; gap: 14px; }
+.avatar {
+  width: 58px; height: 58px; border-radius: 50%; flex-shrink: 0;
+  background: linear-gradient(135deg, #d4a843 0%, #9a6fa8 100%);
+  display: flex; align-items: center; justify-content: center; font-size: 24px;
+  border: 2px solid rgba(212,168,67,0.4); overflow: hidden;
+}
+.avatar img { width: 100%; height: 100%; object-fit: cover; }
+.profile-info h2 { font-size: 17px; font-weight: 500; }
+.profile-info .uid { font-size: 11px; color: var(--muted); margin-top: 3px; }
+.level-badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  margin-top: 6px; padding: 3px 10px; border-radius: 20px;
+  font-size: 11px; background: rgba(212,168,67,0.15);
+  color: var(--gold-soft); border: 0.5px solid rgba(212,168,67,0.35);
+}
+
+/* ── STATS ── */
+.stats-row {
+  display: grid; grid-template-columns: 1fr 1fr 1fr;
+  background: var(--border2); gap: 0.5px; margin-top: 1px;
+}
+.stat-box { background: var(--mid); padding: 14px 8px; text-align: center; }
+.stat-num { font-size: 22px; font-weight: 500; color: var(--gold-soft); font-family: 'Noto Serif TC', serif; }
+.stat-label { font-size: 10px; color: var(--muted); margin-top: 3px; letter-spacing: 0.5px; }
+
+/* ── TABS ── */
+.tabs {
+  display: flex; background: var(--mid);
+  border-bottom: 0.5px solid var(--border); position: sticky; top: 53px; z-index: 9;
+}
+.tab {
+  flex: 1; padding: 11px 0; text-align: center;
+  font-size: 11px; color: var(--muted); cursor: pointer;
+  border-bottom: 2px solid transparent; transition: all .2s;
+  user-select: none;
+}
+.tab .tab-icon { font-size: 17px; display: block; margin-bottom: 2px; }
+.tab.active { color: var(--gold-soft); border-bottom-color: var(--gold-light); }
+
+/* ── PAGES ── */
+.page { display: none; padding: 16px; flex: 1; }
+.page.active { display: block; }
+
+/* ── SECTION TITLE ── */
+.sec-title {
+  font-size: 11px; color: var(--muted); letter-spacing: 1.5px;
+  text-transform: uppercase; margin-bottom: 12px; padding-bottom: 8px;
+  border-bottom: 0.5px solid var(--border2);
+  display: flex; align-items: center; gap: 6px;
+}
+.sec-title::before { content: ''; width: 3px; height: 12px; background: var(--gold-light); border-radius: 2px; }
+
+/* ── POINT CARD ── */
+.point-hero {
+  background: var(--card); border: 0.5px solid var(--border);
+  border-radius: 14px; padding: 18px; margin-bottom: 14px;
+  position: relative; overflow: hidden;
+}
+.point-hero::after {
+  content: '✦'; position: absolute; right: 14px; bottom: -8px;
+  font-size: 64px; color: rgba(212,168,67,0.08); pointer-events: none;
+}
+.point-hero-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+.point-hero-top span { font-size: 12px; color: var(--muted); }
+.point-big { font-size: 40px; font-weight: 500; color: var(--gold-soft); font-family: 'Noto Serif TC', serif; line-height: 1; }
+.point-unit { font-size: 13px; color: var(--muted); margin-top: 4px; }
+.progress-section { margin-top: 16px; }
+.progress-labels { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); margin-bottom: 6px; }
+.progress-bar { height: 5px; background: rgba(255,255,255,0.08); border-radius: 3px; overflow: hidden; }
+.progress-fill { height: 100%; background: linear-gradient(90deg, var(--gold), var(--gold-soft)); border-radius: 3px; transition: width .8s ease; }
+
+/* ── LOG ITEMS ── */
+.log-list { }
+.log-item {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 13px 0; border-bottom: 0.5px solid var(--border2);
+}
+.log-item:last-child { border-bottom: none; }
+.log-left { display: flex; align-items: center; gap: 10px; }
+.log-icon {
+  width: 36px; height: 36px; border-radius: 9px;
+  display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0;
+}
+.log-icon.earn { background: rgba(212,168,67,0.13); color: var(--gold-soft); }
+.log-icon.use  { background: rgba(196,124,106,0.13); color: var(--rose-light); }
+.log-desc { font-size: 13px; color: var(--text); }
+.log-date { font-size: 11px; color: var(--muted); margin-top: 2px; }
+.log-pts { font-size: 15px; font-weight: 500; }
+.log-pts.plus { color: var(--gold-soft); }
+.log-pts.minus { color: var(--rose-light); }
+
+/* ── COUPON CARDS ── */
+.coupon-card {
+  background: var(--card); border: 0.5px solid var(--border);
+  border-radius: 12px; padding: 14px; margin-bottom: 10px;
+  display: flex; align-items: center; gap: 12px;
+}
+.coupon-icon {
+  width: 44px; height: 44px; border-radius: 10px;
+  background: rgba(212,168,67,0.12); display: flex; align-items: center;
+  justify-content: center; font-size: 20px; flex-shrink: 0; color: var(--gold-soft);
+}
+.coupon-body { flex: 1; min-width: 0; }
+.coupon-name { font-size: 14px; font-weight: 500; color: var(--text); }
+.coupon-desc { font-size: 11px; color: var(--muted); margin-top: 2px; }
+.coupon-meta { font-size: 11px; color: var(--gold-light); margin-top: 4px; }
+.coupon-action { flex-shrink: 0; }
+.btn-use {
+  padding: 6px 14px; border-radius: 20px;
+  border: 0.5px solid var(--gold-light); background: transparent;
+  color: var(--gold-soft); font-size: 12px; cursor: pointer;
+  font-family: 'Noto Sans TC', sans-serif; transition: background .15s;
+}
+.btn-use:active { background: rgba(212,168,67,0.15); }
+.btn-disabled {
+  padding: 6px 14px; border-radius: 20px;
+  border: 0.5px solid rgba(255,255,255,0.1); background: transparent;
+  color: var(--subtle); font-size: 12px;
+}
+.btn-redeem {
+  padding: 6px 12px; border-radius: 20px;
+  border: 0.5px solid var(--rose); background: transparent;
+  color: var(--rose-light); font-size: 12px; cursor: pointer;
+  font-family: 'Noto Sans TC', sans-serif; transition: background .15s;
+}
+.btn-redeem:active { background: rgba(196,124,106,0.15); }
+
+/* ── TRANSACTION ITEMS ── */
+.tx-item {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 13px 0; border-bottom: 0.5px solid var(--border2);
+}
+.tx-item:last-child { border-bottom: none; }
+.tx-icon {
+  width: 36px; height: 36px; border-radius: 9px;
+  background: rgba(196,124,106,0.12); display: flex; align-items: center;
+  justify-content: center; font-size: 16px; color: var(--rose-light); flex-shrink: 0;
+}
+.tx-info { flex: 1; margin-left: 10px; }
+.tx-name { font-size: 13px; color: var(--text); }
+.tx-date { font-size: 11px; color: var(--muted); margin-top: 2px; }
+.tx-amount { font-size: 14px; font-weight: 500; color: var(--rose-light); }
+
+/* ── LEVEL PAGE ── */
+.level-hero {
+  background: var(--card); border: 0.5px solid var(--border);
+  border-radius: 14px; padding: 18px; margin-bottom: 14px;
+  display: flex; align-items: center; gap: 14px;
+}
+.level-emblem { font-size: 36px; }
+.level-hero-info h3 { font-size: 18px; font-weight: 500; color: var(--gold-soft); font-family: 'Noto Serif TC', serif; }
+.level-hero-info p { font-size: 12px; color: var(--muted); margin-top: 4px; }
+
+.level-row {
+  display: flex; align-items: center; gap: 12px;
+  padding: 14px 0; border-bottom: 0.5px solid var(--border2);
+}
+.level-row:last-child { border-bottom: none; }
+.level-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.level-row-info { flex: 1; }
+.level-row-name { font-size: 14px; font-weight: 500; }
+.level-row-req { font-size: 11px; color: var(--muted); margin-top: 2px; }
+.current-tag {
+  font-size: 10px; padding: 2px 8px; border-radius: 10px;
+  background: rgba(212,168,67,0.18); color: var(--gold-soft);
+}
+
+.perks-card {
+  margin-top: 14px; padding: 16px; background: var(--card);
+  border-radius: 12px; border: 0.5px solid var(--border);
+}
+.perks-card h4 { font-size: 12px; color: var(--muted); margin-bottom: 12px; letter-spacing: 1px; }
+.perk-row { display: flex; gap: 8px; padding: 7px 0; border-bottom: 0.5px solid var(--border2); font-size: 13px; line-height: 1.6; }
+.perk-row:last-child { border-bottom: none; }
+.perk-row .em { font-size: 15px; flex-shrink: 0; }
+
+/* ── EMPTY STATE ── */
+.empty { text-align: center; padding: 40px 20px; color: var(--muted); }
+.empty-icon { font-size: 36px; margin-bottom: 12px; opacity: .5; }
+.empty p { font-size: 14px; }
+
+/* ── REGISTER FORM ── */
+#register-screen {
+  position: fixed; inset: 0; background: var(--deep);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 32px 24px; z-index: 50;
+}
+#register-screen h1 { font-family: 'Noto Serif TC', serif; font-size: 22px; color: var(--gold-soft); margin-bottom: 6px; }
+#register-screen p { font-size: 13px; color: var(--muted); margin-bottom: 28px; text-align: center; line-height: 1.7; }
+.form-field { width: 100%; margin-bottom: 14px; }
+.form-field label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 6px; }
+.form-field input {
+  width: 100%; padding: 12px 14px; border-radius: 10px;
+  background: var(--card); border: 0.5px solid var(--border);
+  color: var(--text); font-size: 14px; font-family: 'Noto Sans TC', sans-serif;
+  outline: none; transition: border-color .2s;
+}
+.form-field input:focus { border-color: var(--gold-light); }
+.btn-primary {
+  width: 100%; padding: 14px; border-radius: 12px;
+  background: linear-gradient(135deg, var(--gold), var(--gold-light));
+  border: none; color: var(--deep); font-size: 15px; font-weight: 500;
+  font-family: 'Noto Sans TC', sans-serif; cursor: pointer; margin-top: 6px;
+  transition: opacity .15s;
+}
+.btn-primary:active { opacity: .85; }
+
+/* ── TOAST ── */
+#toast {
+  position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
+  background: rgba(212,168,67,0.92); color: var(--deep);
+  padding: 10px 22px; border-radius: 24px;
+  font-size: 13px; font-weight: 500; opacity: 0;
+  transition: opacity .3s; pointer-events: none; white-space: nowrap; z-index: 999;
+}
+#toast.show { opacity: 1; }
+#toast.error-toast { background: rgba(196,124,106,0.92); color: #fff; }
+</style>
+</head>
+<body>
+
+<!-- Loading -->
+<div id="loading">
+  <div class="star">✦</div>
+  <p>星光載入中…</p>
+</div>
+
+<!-- Register Screen -->
+<div id="register-screen" style="display:none">
+<div class="reg-inner">
+
+  <!-- 頭像 + 標題 -->
+  <div style="text-align:center;margin-bottom:20px">
+    <div id="reg-avatar" style="width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,#d4a843,#9a6fa8);display:flex;align-items:center;justify-content:center;font-size:24px;margin:0 auto 10px;border:2px solid rgba(212,168,67,0.4);overflow:hidden">🌟</div>
+    <h1 style="font-family:'Noto Serif TC',serif;font-size:18px;color:var(--gold-soft)">✦ 星光來了</h1>
+    <p style="font-size:12px;color:var(--muted);margin-top:4px">您已透過 Line 登入，請完成會員註冊</p>
+  </div>
+
+  <!-- Line 暱稱提示 -->
+  <div id="reg-line-hint" style="display:none;background:rgba(212,168,67,0.08);border:0.5px solid rgba(212,168,67,0.2);border-radius:10px;padding:10px 14px;margin-bottom:16px;font-size:12px;color:var(--muted)">
+    <span style="color:var(--gold-light)">Line 暱稱：</span>
+    <span id="reg-line-name"></span>
+    <span style="display:block;margin-top:2px">（以下請填寫真實姓名）</span>
+  </div>
+
+  <!-- 步驟指示 -->
+  <div style="display:flex;align-items:center;gap:6px;margin-bottom:20px">
+    <div id="step-dot-1" style="width:8px;height:8px;border-radius:50%;background:var(--gold-light)"></div>
+    <div id="step-dot-2" style="width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,0.2)"></div>
+    <div id="step-dot-3" style="width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,0.2)"></div>
+    <div id="step-dot-4" style="width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,0.2)"></div>
+    <span id="step-label" style="font-size:12px;color:var(--muted);margin-left:6px">步驟 1 / 4</span>
+  </div>
+
+  <!-- Step 1：真實姓名 -->
+  <div id="reg-step-1" class="reg-step">
+    <div style="font-size:18px;color:var(--text);margin-bottom:8px;font-weight:500">您的真實姓名是？</div>
+    <div style="font-size:13px;color:var(--muted);margin-bottom:20px">請填寫身分證上的姓名</div>
+    <div class="form-field">
+      <input type="text" id="reg-name" placeholder="例如：林雅涵" autocomplete="name"
+        style="font-size:18px;padding:16px 14px" onkeydown="if(event.key==='Enter')nextStep(2)">
+    </div>
+  </div>
+
+  <!-- Step 2：手機號碼 -->
+  <div id="reg-step-2" class="reg-step" style="display:none">
+    <div style="font-size:18px;color:var(--text);margin-bottom:8px;font-weight:500">您的手機號碼？</div>
+    <div style="font-size:13px;color:var(--muted);margin-bottom:20px">用於接收重要通知</div>
+    <div class="form-field">
+      <input type="tel" id="reg-phone" placeholder="0912345678" autocomplete="tel"
+        style="font-size:18px;padding:16px 14px;letter-spacing:2px" onkeydown="if(event.key==='Enter')nextStep(3)">
+    </div>
+  </div>
+
+  <!-- Step 3：出生年月日 -->
+  <div id="reg-step-3" class="reg-step" style="display:none">
+    <div style="font-size:18px;color:var(--text);margin-bottom:8px;font-weight:500">您的出生年月日？</div>
+    <div style="font-size:13px;color:var(--muted);margin-bottom:20px">直接輸入數字，例如：<span style="color:var(--gold-soft)">19830321</span></div>
+    <div class="form-field">
+      <input type="tel" id="reg-birthday" placeholder="19830321" maxlength="8"
+        style="font-size:24px;padding:16px 14px;letter-spacing:4px;text-align:center"
+        onkeydown="if(event.key==='Enter')nextStep(4)">
+    </div>
+    <div style="font-size:11px;color:var(--subtle);margin-top:8px;text-align:center">
+      西元年4碼 + 月2碼 + 日2碼，共8個數字
+    </div>
+  </div>
+
+  <!-- Step 4：Email（選填） -->
+  <div id="reg-step-4" class="reg-step" style="display:none">
+    <div style="font-size:18px;color:var(--text);margin-bottom:8px;font-weight:500">電子信箱（選填）</div>
+    <div style="font-size:13px;color:var(--muted);margin-bottom:20px">用於接收活動資訊，可略過</div>
+    <div class="form-field">
+      <input type="email" id="reg-email" placeholder="example@gmail.com" autocomplete="email"
+        style="font-size:16px;padding:16px 14px">
+    </div>
+
+    <!-- 同意條款 -->
+    <div style="display:flex;align-items:flex-start;gap:10px;margin-top:16px;padding:12px;background:rgba(255,255,255,0.04);border-radius:10px">
+      <input type="checkbox" id="reg-agree" style="width:18px;height:18px;margin-top:2px;accent-color:var(--gold);flex-shrink:0">
+      <label for="reg-agree" style="font-size:12px;color:var(--muted);line-height:1.7;cursor:pointer">
+        我同意星光來了蒐集個人資料，用於會員管理及服務通知，資料僅供內部使用。
+      </label>
+    </div>
+  </div>
+
+  <!-- 錯誤提示 -->
+  <div id="reg-err" style="color:var(--rose-light);font-size:13px;text-align:center;margin:12px 0;min-height:18px"></div>
+
+  <!-- 按鈕區 -->
+  <div style="display:flex;gap:10px;margin-top:8px">
+    <button id="reg-btn-back" onclick="prevStep()" style="display:none;flex:1;padding:14px;border-radius:12px;background:transparent;border:0.5px solid var(--border);color:var(--muted);font-size:15px;font-family:'Noto Sans TC',sans-serif;cursor:pointer">
+      ← 上一步
+    </button>
+    <button id="reg-btn-next" onclick="nextStep(0)" style="flex:1;padding:14px;border-radius:12px;background:linear-gradient(135deg,var(--gold),var(--gold-light));border:none;color:var(--deep);font-size:15px;font-weight:500;font-family:'Noto Sans TC',sans-serif;cursor:pointer">
+      下一步 →
+    </button>
+  </div>
+
+  <div style="text-align:center;margin-top:16px">
+    <span onclick="skipRegister()" style="font-size:12px;color:rgba(255,255,255,0.25);cursor:pointer;text-decoration:underline">
+      稍後再填，先進入會員中心
+    </span>
+  </div>
+
+  <div style="height:20px"></div>
+</div><!-- /reg-inner -->
+</div>
+
+<!-- Main App -->
+<div class="wrap" id="app" style="display:none">
+  <div class="header">
+    <div class="logo">
+      <div class="logo-main">星光來了</div>
+      <div class="logo-sub">ASTROLIGHTRA</div>
+    </div>
+    <div class="header-right">
+      <button class="header-btn" onclick="refreshData()" title="重新整理">↻</button>
+    </div>
+  </div>
+
+  <div class="profile-section">
+    <div class="profile-row">
+      <div class="avatar" id="avatar-wrap">🌟</div>
+      <div class="profile-info">
+        <h2 id="display-name">載入中…</h2>
+        <div class="uid" id="member-uid"></div>
+        <div class="level-badge" id="level-badge">✦ 載入中</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="stats-row">
+    <div class="stat-box">
+      <div class="stat-num" id="stat-points">0</div>
+      <div class="stat-label">光點點數</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-num" id="stat-coupons">0</div>
+      <div class="stat-label">優惠券</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-num" id="stat-txcount">0</div>
+      <div class="stat-label">消費次數</div>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab('points')">
+      <span class="tab-icon">✦</span>點數
+    </div>
+    <div class="tab" onclick="switchTab('coupons')">
+      <span class="tab-icon">🎟</span>優惠券
+    </div>
+    <div class="tab" onclick="switchTab('events')">
+      <span class="tab-icon">🎪</span>活動
+    </div>
+    <div class="tab" onclick="switchTab('payment')">
+      <span class="tab-icon">💳</span>付款
+    </div>
+    <div class="tab" onclick="switchTab('level')">
+      <span class="tab-icon">👑</span>等級
+    </div>
+  </div>
+
+  <!-- Points Page -->
+  <div id="page-points" class="page active">
+    <div class="point-hero">
+      <div class="point-hero-top">
+        <span>目前光點</span>
+        <span style="font-size:18px;color:var(--gold-soft)">✦</span>
+      </div>
+      <div class="point-big" id="hero-points">0</div>
+      <div class="point-unit">光點 · Light Points</div>
+      <div class="progress-section">
+        <div class="progress-labels">
+          <span id="progress-current-level">銅星</span>
+          <span id="progress-next-hint">升等資訊載入中</span>
+        </div>
+        <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+      </div>
+    </div>
+    <div class="sec-title">點數紀錄</div>
+    <div class="log-list" id="log-list">
+      <div class="empty"><div class="empty-icon">✦</div><p>尚無點數紀錄</p></div>
+    </div>
+  </div>
+
+  <!-- Coupons Page -->
+  <div id="page-coupons" class="page">
+    <div class="sec-title">我的優惠券</div>
+    <div id="my-coupons-list">
+      <div class="empty"><div class="empty-icon">🎟</div><p>尚無優惠券</p></div>
+    </div>
+    <div class="sec-title" style="margin-top:18px">光點兌換</div>
+    <div id="redeem-list">
+      <div class="empty"><div class="empty-icon">✨</div><p>載入兌換項目中…</p></div>
+    </div>
+  </div>
+
+  <!-- History Page -->
+  <div id="page-history" class="page">
+    <div class="sec-title">消費紀錄</div>
+    <div id="tx-list">
+      <div class="empty"><div class="empty-icon">📋</div><p>尚無消費紀錄</p></div>
+    </div>
+  </div>
+
+  <!-- Events Page -->
+  <div id="page-events" class="page">
+    <div class="sec-title">🎪 近期活動</div>
+    <div id="events-list-member">
+      <div class="empty"><div class="empty-icon">🎪</div><p>載入中…</p></div>
+    </div>
+  </div>
+
+  <!-- Payment Page -->
+  <div id="page-payment" class="page">
+    <div class="sec-title">💳 匯款付款申請</div>
+
+    <!-- 匯款資訊卡 -->
+    <div class="point-card" style="margin-bottom:14px">
+      <div style="font-size:12px;color:var(--muted);margin-bottom:10px">✦ 匯款帳號資訊</div>
+      <div style="font-size:13px;color:var(--text);line-height:2.2">
+        <div style="display:flex;justify-content:space-between">
+          <span style="color:var(--muted)">銀行</span>
+          <span>台灣企銀（050）</span>
+        </div>
+        <div style="display:flex;justify-content:space-between">
+          <span style="color:var(--muted)">帳號</span>
+          <span id="bank-account" style="color:var(--gold-soft);letter-spacing:1px">1111-202-9607</span>
+        </div>
+        <div style="display:flex;justify-content:space-between">
+          <span style="color:var(--muted)">戶名</span>
+          <span>敬天洞地顧問有限公司</span>
+        </div>
+      </div>
+      <div style="margin-top:12px;padding:10px;background:rgba(212,168,67,0.08);border-radius:8px;font-size:12px;color:var(--muted)">
+        ⚠️ 匯款後請填寫下方申請表，管理員確認後自動加點
+      </div>
+    </div>
+
+    <!-- 申請表 -->
+    <div class="sec-title">填寫匯款申請</div>
+    <div class="point-card">
+      <div class="form-field" style="margin-bottom:14px">
+        <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:6px">匯款金額（元）</label>
+        <input type="number" id="pay-amount" placeholder="例如：3800"
+          style="width:100%;padding:12px 14px;border-radius:10px;background:var(--card2);border:0.5px solid var(--border);color:var(--text);font-size:15px;font-family:'Noto Sans TC',sans-serif;outline:none">
+      </div>
+      <div class="form-field" style="margin-bottom:14px">
+        <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:6px">匯款帳號末5碼</label>
+        <input type="tel" id="pay-code" placeholder="例如：12345" maxlength="5"
+          style="width:100%;padding:12px 14px;border-radius:10px;background:var(--card2);border:0.5px solid var(--border);color:var(--text);font-size:18px;letter-spacing:4px;font-family:'Noto Sans TC',sans-serif;outline:none;text-align:center">
+      </div>
+      <div class="form-field" style="margin-bottom:14px">
+        <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:6px">付款項目說明</label>
+        <input type="text" id="pay-desc" placeholder="例如：年度會員費、靈魂頻率校準課程"
+          style="width:100%;padding:12px 14px;border-radius:10px;background:var(--card2);border:0.5px solid var(--border);color:var(--text);font-size:14px;font-family:'Noto Sans TC',sans-serif;outline:none">
+      </div>
+      <div class="form-field" style="margin-bottom:16px">
+        <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:6px">備註（選填）</label>
+        <input type="text" id="pay-note" placeholder="其他說明"
+          style="width:100%;padding:12px 14px;border-radius:10px;background:var(--card2);border:0.5px solid var(--border);color:var(--text);font-size:14px;font-family:'Noto Sans TC',sans-serif;outline:none">
+      </div>
+      <button onclick="submitPayment()" style="width:100%;padding:14px;border-radius:12px;background:linear-gradient(135deg,var(--gold),var(--gold-light));border:none;color:var(--deep);font-size:15px;font-weight:500;font-family:'Noto Sans TC',sans-serif;cursor:pointer">
+        ✦ 送出匯款申請
+      </button>
+    </div>
+
+    <!-- 申請紀錄 -->
+    <div class="sec-title" style="margin-top:18px">申請紀錄</div>
+    <div id="payment-history-list">
+      <div class="empty"><div class="empty-icon">💳</div><p>尚無申請紀錄</p></div>
+    </div>
+  </div>
+
+  <!-- Level Page -->
+  <div id="page-level" class="page">
+    <div class="level-hero">
+      <div class="level-emblem" id="level-emblem">🥉</div>
+      <div class="level-hero-info">
+        <h3 id="level-name-big">銅星 Bronze</h3>
+        <p id="level-spent">累計消費 $0</p>
+      </div>
+    </div>
+    <div class="sec-title">等級制度</div>
+    <div class="level-row">
+      <div class="level-dot" style="background:#8b7355"></div>
+      <div class="level-row-info">
+        <div class="level-row-name" style="color:var(--muted)">🥉 銅星 Bronze</div>
+        <div class="level-row-req">累計消費 $0 起</div>
+      </div>
+      <span class="current-tag" id="tag-bronze" style="display:none">目前</span>
+    </div>
+    <div class="level-row">
+      <div class="level-dot" style="background:#a8a8a8"></div>
+      <div class="level-row-info">
+        <div class="level-row-name" style="color:#ccc">🥈 銀星 Silver</div>
+        <div class="level-row-req">累計消費 $3,000 起</div>
+      </div>
+      <span class="current-tag" id="tag-silver" style="display:none">目前</span>
+    </div>
+    <div class="level-row">
+      <div class="level-dot" style="background:var(--gold-light)"></div>
+      <div class="level-row-info">
+        <div class="level-row-name" style="color:var(--gold-soft)">🥇 金星 Gold</div>
+        <div class="level-row-req">累計消費 $6,000 起</div>
+      </div>
+      <span class="current-tag" id="tag-gold" style="display:none">目前</span>
+    </div>
+    <div class="level-row">
+      <div class="level-dot" style="background:#b8ceff"></div>
+      <div class="level-row-info">
+        <div class="level-row-name" style="color:#b8ceff">💎 鑽石星 Diamond</div>
+        <div class="level-row-req">累計消費 $15,000 起</div>
+      </div>
+      <span class="current-tag" id="tag-diamond" style="display:none">目前</span>
+    </div>
+    <div class="perks-card">
+      <h4>各等級專屬福利</h4>
+      <div class="perk-row"><span class="em">🥉</span><span>銅星：生日點數禮 100 光點、活動優先通知</span></div>
+      <div class="perk-row"><span class="em">🥈</span><span>銀星：每月專屬折扣碼、點數加倍日</span></div>
+      <div class="perk-row"><span class="em">🥇</span><span>金星：專屬客服優先通道、優先選課名額、季度禮遇</span></div>
+      <div class="perk-row"><span class="em">💎</span><span>鑽石：一對一能量諮詢、年度尊榮禮遇、新品優先體驗</span></div>
+    </div>
+
+    <!-- 後台入口 -->
+    <div style="text-align:center;padding:24px 0 16px">
+      <a href="https://arthur-lovebluehand.github.io/astrolightra-admin"
+         style="font-size:12px;color:rgba(255,255,255,0.45);text-decoration:none;letter-spacing:2px;border:0.5px solid rgba(255,255,255,0.15);padding:5px 16px;border-radius:20px"
+         target="_blank">⚙ 管理後台</a>
+    </div>
+  </div>
+
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ══════════════════════════════════════════
+//  設定區域 — 請填入您的資訊
+// ══════════════════════════════════════════
+const SUPABASE_URL  = 'https://hcwhvkazlwipjwnnffgf.supabase.co';
+const SUPABASE_KEY  = 'sb_publishable_T19s6wBWQP4-y8xFGID3tw_vChW5whq';
+const LIFF_ID       = '2010083612-PNlhiSK4';
+
+// 等級設定
+const LEVELS = [
+  { key: 'bronze',  label: '銅星 Bronze',  emblem: '🥉', min: 0,     max: 3000  },
+  { key: 'silver',  label: '銀星 Silver',  emblem: '🥈', min: 3000,  max: 6000  },
+  { key: 'gold',    label: '金星 Gold',    emblem: '🥇', min: 6000,  max: 15000 },
+  { key: 'diamond', label: '鑽石星 Diamond', emblem: '💎', min: 15000, max: null  },
+];
+
+// ══════════════════════════════════════════
+//  初始化
+// ══════════════════════════════════════════
+const { createClient } = supabase;
+const db = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+let currentMember = null;
+let lineProfile   = null;
+let pointSettings = {
+  welcome_points: 100,
+  points_per_100: 5,
+  bronze_multiplier: 1,
+  silver_multiplier: 1.2,
+  gold_multiplier: 1.5,
+  diamond_multiplier: 2,
+  event_multiplier: 1
+};
+
+async function loadPointSettings() {
+  const { data } = await db.from('point_settings').select('*');
+  if (data) {
+    data.forEach(s => { pointSettings[s.key] = Number(s.value); });
+  }
+}
+
+async function init() {
+  try {
+    // 載入點數設定
+    await loadPointSettings();
+
+    // 嘗試初始化 LIFF
+    if (LIFF_ID !== 'YOUR_LIFF_ID') {
+      await liff.init({ liffId: LIFF_ID });
+      if (!liff.isLoggedIn()) {
+        liff.login({ redirectUri: window.location.href });
+        return;
+      }
+      lineProfile = await liff.getProfile();
+    } else {
+      // 開發預覽模式（尚未設定 LIFF ID）
+      lineProfile = {
+        userId: 'preview_user_001',
+        displayName: '預覽會員',
+        pictureUrl: null
+      };
+    }
+    await loadOrCreateMember();
+  } catch (e) {
+    console.error(e);
+    // LIFF 初始化失敗，嘗試用訪客模式載入
+    if (e.code === 'INIT_FAILED' || e.message.includes('INIT')) {
+      showToast('請在 Line App 內開啟此頁面', true);
+    } else {
+      showToast('載入失敗：' + (e.message || '請重新整理'), true);
+    }
+    hideLoading();
+  }
+}
+
+async function loadOrCreateMember() {
+  const { data, error } = await db
+    .from('members')
+    .select('*')
+    .eq('line_user_id', lineProfile.userId)
+    .single();
+
+  if (error && error.code === 'PGRST116') {
+    // 新會員 → 顯示註冊畫面
+    hideLoading();
+    document.getElementById('register-screen').style.display = 'block';
+    currentStep = 1;
+    showStep(1);
+    // 顯示 Line 暱稱提示（不自動填入真實姓名欄位）
+    if (lineProfile.displayName) {
+      const hint = document.getElementById('reg-line-hint');
+      document.getElementById('reg-line-name').textContent = lineProfile.displayName;
+      if (hint) hint.style.display = 'block';
+    }
+    // 自動顯示 Line 頭像
+    if (lineProfile.pictureUrl) {
+      document.getElementById('reg-avatar').innerHTML =
+        `<img src="${lineProfile.pictureUrl}" style="width:100%;height:100%;object-fit:cover">`;
+    }
+    // 顯示歡迎點數
+    await loadPointSettings();
+    const wPts = document.getElementById('reg-welcome-pts');
+    if (wPts) wPts.textContent = Math.round(pointSettings.welcome_points || 100);
+    return;
+  }
+
+  currentMember = data;
+  await renderApp();
+}
+
+// ══════════════════════════════════════════
+//  分步驟註冊
+// ══════════════════════════════════════════
+let currentStep = 1;
+const totalSteps = 4;
+
+function showStep(n) {
+  currentStep = n;
+  for (let i = 1; i <= totalSteps; i++) {
+    const el = document.getElementById('reg-step-' + i);
+    if (el) el.style.display = i === n ? 'block' : 'none';
+    const dot = document.getElementById('step-dot-' + i);
+    if (dot) dot.style.background = i <= n ? 'var(--gold-light)' : 'rgba(255,255,255,0.2)';
+  }
+  document.getElementById('step-label').textContent = '步驟 ' + n + ' / ' + totalSteps;
+  document.getElementById('reg-btn-back').style.display = n > 1 ? 'block' : 'none';
+  document.getElementById('reg-btn-next').textContent = n === totalSteps ? '✦ 完成註冊' : '下一步 →';
+  document.getElementById('reg-err').textContent = '';
+
+  // 自動 focus 輸入框
+  setTimeout(() => {
+    const step = document.getElementById('reg-step-' + n);
+    if (step) {
+      const input = step.querySelector('input[type="text"],input[type="tel"],input[type="email"]');
+      if (input) input.focus();
+    }
+  }, 100);
+}
+
+function nextStep(forceTo) {
+  const errEl = document.getElementById('reg-err');
+  errEl.textContent = '';
+
+  if (currentStep === 1) {
+    const name = document.getElementById('reg-name').value.trim();
+    if (!name) { errEl.textContent = '請輸入真實姓名'; return; }
+  }
+  if (currentStep === 2) {
+    const phone = document.getElementById('reg-phone').value.trim();
+    if (!phone || phone.length < 8) { errEl.textContent = '請輸入正確的手機號碼'; return; }
+  }
+  if (currentStep === 3) {
+    const bday = document.getElementById('reg-birthday').value.trim().replace(/[^0-9]/g,'');
+    if (!bday || bday.length !== 8) { errEl.textContent = '請輸入8碼數字，例如：19830321'; return; }
+  }
+
+  if (currentStep < totalSteps) {
+    showStep(currentStep + 1);
+  } else {
+    registerMember();
+  }
+}
+
+function prevStep() {
+  if (currentStep > 1) showStep(currentStep - 1);
+}
+
+async function skipRegister() {
+  if (!confirm('確定先跳過？之後可從會員頁面補填資料。')) return;
+  const name = (lineProfile && lineProfile.displayName) ? lineProfile.displayName : '會員';
+  const welcomePts = Math.round(pointSettings.welcome_points || 100);
+  const level = calcLevel(0);
+
+  const { data, error } = await db.from('members').insert({
+    line_user_id: lineProfile.userId,
+    display_name: name,
+    avatar_url: lineProfile.pictureUrl || null,
+    points: welcomePts,
+    level: level.key,
+    is_incomplete: true  // 標記資料未完整
+  }).select().single();
+
+  if (error) { showToast('建立失敗，請重試', true); return; }
+
+  await db.from('point_logs').insert({
+    member_id: data.id,
+    change: welcomePts,
+    reason: '新會員歡迎禮'
+  });
+
+  currentMember = data;
+  document.getElementById('register-screen').style.display = 'none';
+  await renderApp();
+  showToast('🌟 歡迎！記得到會員資料補填完整資訊喔');
+}
+
+async function registerMember() {
+  const name     = document.getElementById('reg-name').value.trim();
+  const phone    = document.getElementById('reg-phone').value.trim();
+  const email    = document.getElementById('reg-email').value.trim();
+  const birthdayRaw = document.getElementById('reg-birthday').value.trim().replace(/[^0-9]/g, '');
+  // 轉換 YYYYMMDD → YYYY-MM-DD
+  const birthday = birthdayRaw.length === 8
+    ? birthdayRaw.slice(0,4) + '-' + birthdayRaw.slice(4,6) + '-' + birthdayRaw.slice(6,8)
+    : null;
+  const agreed   = document.getElementById('reg-agree').checked;
+  const errEl    = document.getElementById('reg-err');
+
+  // 必填驗證
+  if (!name) { errEl.textContent = '請輸入真實姓名'; return; }
+  if (!phone) { errEl.textContent = '請輸入手機號碼'; return; }
+  if (!birthdayRaw || birthdayRaw.length !== 8) { errEl.textContent = '請輸入8碼數字，例如：19830321'; return; }
+  if (!agreed) { errEl.textContent = '請同意個人資料蒐集條款'; return; }
+  errEl.textContent = '';
+
+  const level = calcLevel(0);
+  const welcomePts = Math.round(pointSettings.welcome_points || 100);
+  // 先檢查是否已有不完整的帳號（稍後補填的情況）
+  const { data: existing } = await db.from('members')
+    .select('id').eq('line_user_id', lineProfile.userId).maybeSingle();
+
+  // display_name 用 Line 暱稱，real_name 用填寫的真實姓名
+  const lineDisplayName = (lineProfile && lineProfile.displayName) ? lineProfile.displayName : name;
+
+  let data, error;
+  if (existing) {
+    const res = await db.from('members').update({
+      real_name: name,
+      avatar_url: lineProfile.pictureUrl || null,
+      phone: phone || null,
+      email: email || null,
+      birthday: birthday,
+      is_incomplete: false
+    }).eq('id', existing.id).select().single();
+    data = res.data; error = res.error;
+  } else {
+    const res = await db.from('members').insert({
+      line_user_id: lineProfile.userId,
+      display_name: lineDisplayName,
+      real_name: name,
+      avatar_url: lineProfile.pictureUrl || null,
+      phone: phone || null,
+      email: email || null,
+      birthday: birthday,
+      points: welcomePts,
+      level: level.key,
+      is_incomplete: false
+    }).select().single();
+    data = res.data; error = res.error;
+  }
+
+  if (error) { showToast('註冊失敗，請重試', true); return; }
+
+  // 只有全新註冊才給歡迎點數
+  if (!existing) {
+    await db.from('point_logs').insert({
+      member_id: data.id,
+      change: welcomePts,
+      reason: '新會員歡迎禮'
+    });
+  }
+
+  currentMember = data;
+  document.getElementById('register-screen').style.display = 'none';
+  await renderApp();
+  showToast(`🌟 歡迎加入！送您 ${welcomePts} 光點`);
+}
+
+// ══════════════════════════════════════════
+//  渲染 App
+// ══════════════════════════════════════════
+async function renderApp() {
+  hideLoading();
+
+  // 資料不完整提示
+  if (currentMember.is_incomplete) {
+    const incompleteBanner = document.createElement('div');
+    incompleteBanner.style.cssText = 'background:rgba(212,168,67,0.1);border:0.5px solid rgba(212,168,67,0.3);padding:11px 16px;display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:13px;color:var(--gold-soft);cursor:pointer;';
+    incompleteBanner.innerHTML = '<span>📝 會員資料尚未填寫完整，點此補填</span><span style="font-size:16px">›</span>';
+    incompleteBanner.onclick = () => {
+      document.getElementById('app').style.display = 'none';
+      document.getElementById('register-screen').style.display = 'block';
+    };
+    document.querySelector('.wrap').insertBefore(incompleteBanner, document.querySelector('.tabs'));
+  }
+
+  // 暫停會員提示
+  if (currentMember.is_suspended) {
+    document.getElementById('app').style.display = 'flex';
+    updateProfile();
+    // 在頁面頂部顯示暫停提示
+    const suspendBanner = document.createElement('div');
+    suspendBanner.style.cssText = 'background:rgba(196,124,106,0.15);border:0.5px solid rgba(196,124,106,0.4);padding:12px 16px;text-align:center;font-size:13px;color:var(--rose-light);';
+    suspendBanner.innerHTML = '⚠️ 您的帳號目前暫停部分服務，如有疑問請聯絡客服';
+    document.querySelector('.wrap').insertBefore(suspendBanner, document.querySelector('.tabs'));
+    await Promise.all([loadPoints(), loadTransactions()]);
+    return;
+  }
+
+  document.getElementById('app').style.display = 'flex';
+  updateProfile();
+  await Promise.all([loadPoints(), loadCoupons(), loadTransactions()]);
+}
+
+function updateProfile() {
+  const m = currentMember;
+  document.getElementById('display-name').textContent = m.display_name || '會員';
+  document.getElementById('member-uid').textContent   = 'Line 會員 · ' + m.line_user_id.slice(0, 12) + '…';
+
+  // 優先用 Line 即時頭像，其次用資料庫存的
+  const avatarUrl = (lineProfile && lineProfile.pictureUrl) ? lineProfile.pictureUrl : m.avatar_url;
+  if (avatarUrl) {
+    document.getElementById('avatar-wrap').innerHTML = `<img src="${avatarUrl}" alt="avatar" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`;
+    // 同步更新資料庫的頭像
+    if (lineProfile && lineProfile.pictureUrl && lineProfile.pictureUrl !== m.avatar_url) {
+      db.from('members').update({ avatar_url: lineProfile.pictureUrl }).eq('id', m.id);
+    }
+  }
+  // 同步更新顯示名稱（如果 Line 名稱有改過）
+  if (lineProfile && lineProfile.displayName && lineProfile.displayName !== m.display_name) {
+    document.getElementById('display-name').textContent = lineProfile.displayName;
+    db.from('members').update({ display_name: lineProfile.displayName }).eq('id', m.id);
+  }
+
+  const lv = calcLevel(m.total_spent);
+  document.getElementById('level-badge').textContent = '✦ ' + lv.label;
+  document.getElementById('stat-points').textContent = m.points.toLocaleString();
+
+  // Level page
+  document.getElementById('level-emblem').textContent  = lv.emblem;
+  document.getElementById('level-name-big').textContent = lv.label;
+  document.getElementById('level-spent').textContent   = '累計消費 $' + Number(m.total_spent).toLocaleString();
+  LEVELS.forEach(l => {
+    const tag = document.getElementById('tag-' + l.key);
+    if (tag) tag.style.display = l.key === lv.key ? 'inline' : 'none';
+  });
+
+  // Progress bar
+  document.getElementById('progress-current-level').textContent = lv.label;
+  if (lv.max) {
+    const pct = Math.min(100, ((m.total_spent - lv.min) / (lv.max - lv.min)) * 100);
+    document.getElementById('progress-fill').style.width = pct + '%';
+    const diff = lv.max - m.total_spent;
+    const nextLv = LEVELS.find(l => l.min === lv.max);
+    document.getElementById('progress-next-hint').textContent =
+      `再 $${diff.toLocaleString()} 升${nextLv ? nextLv.label : ''}`;
+  } else {
+    document.getElementById('progress-fill').style.width = '100%';
+    document.getElementById('progress-next-hint').textContent = '已達最高等級 ✦';
+  }
+}
+
+async function loadPoints() {
+  document.getElementById('hero-points').textContent = (currentMember.points || 0).toLocaleString();
+  const { data } = await db.from('point_logs')
+    .select('*').eq('member_id', currentMember.id)
+    .order('created_at', { ascending: false }).limit(20);
+
+  const list = document.getElementById('log-list');
+  if (!data || data.length === 0) {
+    list.innerHTML = '<div class="empty"><div class="empty-icon">✦</div><p>尚無點數紀錄</p></div>';
+    return;
+  }
+  list.innerHTML = data.map(l => `
+    <div class="log-item">
+      <div class="log-left">
+        <div class="log-icon ${l.change > 0 ? 'earn' : 'use'}">${l.change > 0 ? '+' : '−'}</div>
+        <div><div class="log-desc">${l.reason || '點數異動'}</div>
+             <div class="log-date">${fmtDate(l.created_at)}</div></div>
+      </div>
+      <div class="log-pts ${l.change > 0 ? 'plus' : 'minus'}">${l.change > 0 ? '+' : ''}${l.change}</div>
+    </div>`).join('');
+}
+
+async function loadCoupons() {
+  // 我的優惠券
+  const { data: mine } = await db.from('member_coupons')
+    .select('*, coupons(*)').eq('member_id', currentMember.id).eq('is_used', false);
+
+  document.getElementById('stat-coupons').textContent = mine ? mine.length : 0;
+
+  const mineList = document.getElementById('my-coupons-list');
+  if (!mine || mine.length === 0) {
+    mineList.innerHTML = '<div class="empty"><div class="empty-icon">🎟</div><p>尚無優惠券</p></div>';
+  } else {
+    mineList.innerHTML = mine.map(mc => {
+      const c = mc.coupons;
+      return `<div class="coupon-card">
+        <div class="coupon-icon">🎟</div>
+        <div class="coupon-body">
+          <div class="coupon-name">${c.name}</div>
+          <div class="coupon-desc">${c.type === 'fixed' ? '折抵 $' + c.discount : c.discount + '% 折扣'}</div>
+          <div class="coupon-meta">${c.expires_at ? '到期：' + fmtDate(c.expires_at) : '無使用期限'}</div>
+        </div>
+        <div class="coupon-action">
+          <button class="btn-use" onclick="useCoupon('${mc.id}','${c.name}')">使用</button>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  // 可兌換的優惠券
+  const { data: available } = await db.from('coupons')
+    .select('*').eq('is_active', true).gt('points_required', 0);
+
+  const redeemList = document.getElementById('redeem-list');
+  if (!available || available.length === 0) {
+    redeemList.innerHTML = '<div class="empty"><div class="empty-icon">✨</div><p>目前無兌換項目</p></div>';
+  } else {
+    redeemList.innerHTML = available.map(c => {
+      const canRedeem = currentMember.points >= c.points_required;
+      return `<div class="coupon-card">
+        <div class="coupon-icon">✨</div>
+        <div class="coupon-body">
+          <div class="coupon-name">${c.name}</div>
+          <div class="coupon-desc">${c.type === 'fixed' ? '折抵 $' + c.discount : c.discount + '% 折扣'}</div>
+          <div class="coupon-meta">需 ${c.points_required} 光點</div>
+        </div>
+        <div class="coupon-action">
+          ${canRedeem
+            ? `<button class="btn-redeem" onclick="redeemCoupon('${c.id}','${c.name}',${c.points_required})">兌換</button>`
+            : `<div class="btn-disabled">點數不足</div>`}
+        </div>
+      </div>`;
+    }).join('');
+  }
+}
+
+async function loadTransactions() {
+  const { data } = await db.from('transactions')
+    .select('*').eq('member_id', currentMember.id)
+    .order('created_at', { ascending: false }).limit(30);
+
+  document.getElementById('stat-txcount').textContent = data ? data.length : 0;
+
+  const list = document.getElementById('tx-list');
+  if (!data || data.length === 0) {
+    list.innerHTML = '<div class="empty"><div class="empty-icon">📋</div><p>尚無消費紀錄</p></div>';
+    return;
+  }
+  list.innerHTML = data.map(t => `
+    <div class="tx-item">
+      <div class="tx-icon">🌟</div>
+      <div class="tx-info">
+        <div class="tx-name">${t.description || '消費紀錄'}</div>
+        <div class="tx-date">${fmtDate(t.created_at)}</div>
+      </div>
+      <div class="tx-amount">-$${Number(t.amount).toLocaleString()}</div>
+    </div>`).join('');
+}
+
+// ══════════════════════════════════════════
+//  活動列表（會員前台）
+// ══════════════════════════════════════════
+const EVENT_BASE_URL = 'https://arthur-lovebluehand.github.io/astrolightra-member/event.html?id=';
+
+async function loadMemberEvents() {
+  const { data } = await db.from('events')
+    .select('*').eq('is_active', true)
+    .order('created_at', { ascending: false });
+
+  const list = document.getElementById('events-list-member');
+  if (!data || !data.length) {
+    list.innerHTML = '<div class="empty"><div class="empty-icon">🎪</div><p>目前沒有開放中的活動</p></div>';
+    return;
+  }
+
+  list.innerHTML = data.map(ev => {
+    const url = EVENT_BASE_URL + ev.slug;
+    const coverHtml = ev.cover_image
+      ? '<img src="' + ev.cover_image + '" style="width:100%;max-height:220px;object-fit:contain;border-radius:10px;margin-bottom:12px;display:block" onerror="this.style.display=String.fromCharCode(110,111,110,101)">'
+      : '';
+    const dateHtml = ev.date ? '<div style="font-size:12px;color:var(--muted);margin-bottom:4px">📅 ' + ev.date + '</div>' : '';
+    const locHtml = ev.location ? '<div style="font-size:12px;color:var(--muted);margin-bottom:10px">📍 ' + ev.location + '</div>' : '';
+    const evSlug = ev.slug.replace(/'/g, '');
+    const evTitle = ev.title.replace(/'/g, '');
+    return '<div class="point-card" style="margin-bottom:14px;padding:0;overflow:hidden">'
+      + coverHtml
+      + '<div style="padding:14px">'
+      + '<div style="font-size:16px;color:var(--gold-soft);margin-bottom:8px;font-weight:500">' + ev.title + '</div>'
+      + dateHtml + locHtml
+      + '<div style="display:flex;gap:8px;margin-top:12px">'
+      + '<a href="' + url + '" style="flex:1;padding:10px;border-radius:10px;background:linear-gradient(135deg,var(--gold),var(--gold-light));color:var(--deep);font-size:13px;font-weight:500;text-align:center;text-decoration:none;display:block">✦ 立即報名</a>'
+      + '<button onclick="shareEvent(&quot;' + evSlug + '&quot;,&quot;' + evTitle + '&quot;)" style="padding:10px 14px;border-radius:10px;background:transparent;border:0.5px solid var(--border);color:var(--muted);font-size:13px;cursor:pointer">分享</button>'
+      + '</div></div></div>';
+  }).join('');
+}
+
+
+function shareEvent(slug, title) {
+  const url = EVENT_BASE_URL + slug;
+  if (navigator.share) {
+    navigator.share({ title: title, text: '星光來了・' + title, url: url });
+  } else {
+    navigator.clipboard.writeText(url).then(() => showToast('✅ 連結已複製！'));
+  }
+}
+
+// ══════════════════════════════════════════
+//  付款申請
+// ══════════════════════════════════════════
+async function submitPayment() {
+  const amount = parseFloat(document.getElementById('pay-amount').value);
+  const code   = document.getElementById('pay-code').value.trim();
+  const desc   = document.getElementById('pay-desc').value.trim();
+  const note   = document.getElementById('pay-note').value.trim();
+
+  if (!amount || isNaN(amount)) { showToast('請輸入匯款金額', true); return; }
+  if (!code || code.length < 4) { showToast('請輸入匯款帳號末5碼', true); return; }
+  if (!desc) { showToast('請輸入付款項目說明', true); return; }
+
+  const { error } = await db.from('payment_requests').insert({
+    member_id: currentMember.id,
+    amount,
+    transfer_code: code,
+    description: desc,
+    note: note || null,
+    status: 'pending'
+  });
+
+  if (error) { showToast('送出失敗，請重試', true); return; }
+
+  // 清空表單
+  document.getElementById('pay-amount').value = '';
+  document.getElementById('pay-code').value = '';
+  document.getElementById('pay-desc').value = '';
+  document.getElementById('pay-note').value = '';
+
+  showToast('✅ 申請已送出！請等待管理員確認');
+  loadPaymentHistory();
+}
+
+async function loadPaymentHistory() {
+  const { data } = await db.from('payment_requests')
+    .select('*').eq('member_id', currentMember.id)
+    .order('created_at', { ascending: false });
+
+  const list = document.getElementById('payment-history-list');
+  if (!data || !data.length) {
+    list.innerHTML = '<div class="empty"><div class="empty-icon">💳</div><p>尚無申請紀錄</p></div>';
+    return;
+  }
+
+  const statusMap = {
+    pending:  { label: '⏳ 待確認', color: 'var(--gold-light)' },
+    approved: { label: '✅ 已確認', color: 'var(--success)' },
+    rejected: { label: '❌ 未通過', color: 'var(--rose-light)' }
+  };
+
+  list.innerHTML = data.map(p => {
+    const s = statusMap[p.status] || statusMap.pending;
+    return `
+    <div class="point-card" style="margin-bottom:10px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <span style="font-size:14px;font-weight:500;color:var(--text)">${p.description || '付款申請'}</span>
+        <span style="font-size:12px;color:${s.color}">${s.label}</span>
+      </div>
+      <div style="font-size:12px;color:var(--muted);line-height:2">
+        <div style="display:flex;justify-content:space-between">
+          <span>金額</span><span style="color:var(--rose-light)">$${Number(p.amount).toLocaleString()}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between">
+          <span>末5碼</span><span style="letter-spacing:2px">${p.transfer_code}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between">
+          <span>申請時間</span><span>${fmtDate(p.created_at)}</span>
+        </div>
+        ${p.note ? `<div style="display:flex;justify-content:space-between"><span>備註</span><span>${p.note}</span></div>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ══════════════════════════════════════════
+//  操作函式
+// ══════════════════════════════════════════
+async function useCoupon(memberCouponId, couponName) {
+  if (!confirm(`確定使用「${couponName}」？`)) return;
+  const { error } = await db.from('member_coupons')
+    .update({ is_used: true }).eq('id', memberCouponId);
+  if (error) { showToast('操作失敗', true); return; }
+  showToast('✅ 優惠券已使用！');
+  await loadCoupons();
+}
+
+async function redeemCoupon(couponId, couponName, pointsRequired) {
+  if (currentMember.is_suspended) { showToast('⚠️ 帳號暫停中，無法兌換', true); return; }
+  if (!confirm(`確定用 ${pointsRequired} 光點兌換「${couponName}」？`)) return;
+  if (currentMember.points < pointsRequired) { showToast('光點不足', true); return; }
+
+  const newPoints = currentMember.points - pointsRequired;
+
+  // 扣除點數
+  const { error: e1 } = await db.from('members')
+    .update({ points: newPoints }).eq('id', currentMember.id);
+  if (e1) { showToast('兌換失敗', true); return; }
+
+  // 記錄點數異動
+  await db.from('point_logs').insert({
+    member_id: currentMember.id,
+    change: -pointsRequired,
+    reason: '兌換優惠券：' + couponName
+  });
+
+  // 發放優惠券
+  await db.from('member_coupons').insert({
+    member_id: currentMember.id,
+    coupon_id: couponId
+  });
+
+  currentMember.points = newPoints;
+  showToast('🎉 兌換成功！優惠券已加入');
+  updateProfile();
+  await loadCoupons();
+  await loadPoints();
+}
+
+async function refreshData() {
+  const { data } = await db.from('members').select('*')
+    .eq('id', currentMember.id).single();
+  if (data) currentMember = data;
+  updateProfile();
+  await Promise.all([loadPoints(), loadCoupons(), loadTransactions()]);
+  showToast('已更新');
+}
+
+// ══════════════════════════════════════════
+//  工具函式
+// ══════════════════════════════════════════
+function calcLevel(totalSpent) {
+  for (let i = LEVELS.length - 1; i >= 0; i--) {
+    if (totalSpent >= LEVELS[i].min) return LEVELS[i];
+  }
+  return LEVELS[0];
+}
+
+function fmtDate(iso) {
+  const d = new Date(iso);
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+function switchTab(name) {
+  const names = ['points','coupons','events','payment','level'];
+  document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', names[i] === name));
+  document.querySelectorAll('.page').forEach(p => p.classList.toggle('active', p.id === 'page-' + name));
+  if (name === 'payment') loadPaymentHistory();
+  if (name === 'events') loadMemberEvents();
+}
+
+function hideLoading() {
+  const el = document.getElementById('loading');
+  el.style.opacity = '0';
+  setTimeout(() => el.style.display = 'none', 500);
+}
+
+let toastTimer;
+function showToast(msg, isError = false) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = isError ? 'error-toast show' : 'show';
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.className = '', 2500);
+}
+
+// 啟動
+init();
+</script>
+</body>
+</html>
